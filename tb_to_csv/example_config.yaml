@@ -1,0 +1,60 @@
+# NOTE: This is an example configuration file for the tensorboard_to_csv script
+
+logs_dir: "/workspace/experiments/classification/cifar10/logs/resnet18"  # Path to the logs directory containing model logs
+prefix_file_mapping:  # List of prefixes for categorizing metrics
+  - test
+  - shift
+  - ood
+model_name_mapping:  # Mapping of model directory names to display names
+  mc_dropout: "MC Dropout"
+  ensemble: "Deep Ensemble"
+  batched: "BatchEnsemble"
+  packed: "PackedEnsemble"
+  rank1-cal: "Rank-1 Scaling"
+  standard: "Standard"
+model_sort_order:  # Custom sorting order for models in the CSV
+  - standard
+  - mc_dropout
+  - ensemble
+  - packed
+  - batched
+  - rank1-cal
+metric_name_mapping:  # Mapping for metric names to abbreviated names with optimization directions
+  cls/Acc: "Acc↑"
+  cls/NLL: "NLL↓"
+  cls/Brier: "Brier↓"
+  cal/ECE: "ECE↓"
+  cal/aECE: "aECE↓"
+  sc/AURC: "AURC↓"
+  sc/AUGRC: "AUGRC↓"
+  sc/Cov@5Risk: "C@5R↑"
+  sc/Risk@80Cov: "R@80C↓"
+  AUPR: "AUPR↑"
+  AUROC: "AUROC↑"
+  FPR95: "FPR95↓"
+  cls/Entropy: "Entr"
+  Entropy: "Entr"
+  ens_Entropy: "Ens Entr"
+  ens_MI: "Ens MI"
+  ens_Disagreement: "Ens Dis"
+  shift_severity: "Shift"
+metric_sort_order:
+- cls/Acc
+- cls/NLL
+- cls/Brier
+- cal/ECE
+- cal/aECE
+- sc/AURC
+- sc/AUGRC
+- sc/Cov@5Risk
+- sc/Risk@80Cov
+- AUPR
+- AUROC
+- FPR95
+- cls/Entropy
+- Entropy
+- ens_Entropy
+- ens_MI
+- ens_Disagreement
+confidence: 0.95  # Confidence level for intervals
+combine_columns: true  # Whether to combine mean and CI into one column
