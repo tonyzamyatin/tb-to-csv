@@ -18,9 +18,9 @@ TensorBoard-to-CSV is a Python package that extracts metrics from TensorBoard ev
    cd tb-to-csv
    ```
 
-2. Install the required dependencies:
+2. Install the required dependencies from the `tb-to-csv` directory in editable mode in order to add the `tb_to_csv` package to the `PYTHONPATH`:
    ```bash
-   pip install -r requirements.txt
+   pip install -e .
    ```
 
 ## Usage
@@ -62,14 +62,9 @@ tensorboard-to-csv/
 
 ### Running Tests
 
-You can test the package using the provided `test.py`.
-First, add the `tb-to-csv` folder to your `PYTHONPATH` and then run:
+You can test the package using the provided `test.py` by running:
 ```bash
 pytest tests/
-```
-Alternitavely, you can run:
-```
-PYTHONPATH=$(pwd) pytest tests/
 ```
 
 ## Contributing
