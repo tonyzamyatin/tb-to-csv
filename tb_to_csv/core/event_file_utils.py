@@ -45,3 +45,36 @@ def extract_metrics(event_file: str) -> Dict[str, Any]:
             last_step = scalar_events[-1].step
 
     return metrics, last_step
+
+def get_training_duration(event_file: str) -> float:
+    """
+    Approximate the training duration from a TensorBoard event file.
+
+    Args:
+        event_file (str): Path to the TensorBoard event file.
+
+    Returns:
+        float: Training duration in seconds.
+    """
+    event_acc = EventAccumulator(event_file)
+    event_acc.Reload()
+
+    # Get all events
+    events = event_acc.Tags().get("scalars", [])
+    if not events:
+        raise ValueError(f"No scalar events found in {event_file}")
+
+    # Extract timestamps from all scalar events
+    timestamps = []
+    for tag in events:
+        scalars = event_acc.Scalars(tag)
+        if scalars:
+            timestamps.extend([scalar.wall_time for scalar in scalars])
+
+    if not timestamps:
+        raise ValueError(f"No timestamps found in {event_file}")
+
+    # Calculate duration
+    start_time = min(timestamps)
+    end_time = max(timestamps)
+    return end_time - start_time

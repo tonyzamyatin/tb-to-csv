@@ -1,6 +1,6 @@
 import argparse
 import yaml
-import ast  # For safely parsing inline lists/dictionaries
+import ast
 from typing import Any, Dict, List, Optional, Union
 from tb_to_csv.core.aggregation import process_and_save_metrics
 
@@ -110,6 +110,11 @@ def main() -> None:
         )
     )
     parser.add_argument(
+        "--compute-ci",
+        action="store_true",
+        help="Compute confidence intervals for aggregated metrics. Default: False."
+    )
+    parser.add_argument(
         "--confidence",
         type=float,
         help="Confidence level for intervals. Default: 0.95 if not specified in the config."
@@ -172,6 +177,7 @@ def main() -> None:
         metric_sort_order = config.get("metric_sort_order", None)
 
     # Determine other parameters
+    compute_ci: bool = args.compute_ci or config.get("compute_ci", False)
     confidence: float = args.confidence or config.get("confidence", 0.95)
     combine_columns: bool = not args.separate_columns if args.separate_columns is not None else config.get("combine_columns", True)
     include_step: bool = args.include_step or config.get("include_step", False)
@@ -184,6 +190,7 @@ def main() -> None:
         model_sort_order,
         metric_name_mapping,
         metric_sort_order,
+        compute_ci,
         confidence,
         combine_columns,
         include_step

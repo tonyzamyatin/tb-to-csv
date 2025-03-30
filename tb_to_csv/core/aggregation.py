@@ -35,10 +35,10 @@ def aggregate_metrics_by_model(event_files, prefix_mapping):
 
         # Aggregate metrics for each category
         for category, category_metrics in categorized_metrics.items():
-            for key, value in category_metrics.items():
-                if key not in model_metrics[model_key][category]:
-                    model_metrics[model_key][category][key] = []
-                model_metrics[model_key][category][key].append(value)
+            for metric_key, value in category_metrics.items():
+                if metric_key not in model_metrics[model_key][category]:
+                    model_metrics[model_key][category][metric_key] = {}
+                model_metrics[model_key][category][metric_key][run_name] = value
         
     return model_metrics
 
@@ -51,13 +51,13 @@ def compute_ci_by_model(model_metrics, confidence=0.95, combine_columns=True):
         ci_model_metrics[model_name] = {}
         for category, metrics in categories.items():
             ci_metrics = {}
-            for key, values in metrics.items():
-                mean, margin = compute_confidence_interval(values, confidence)
+            for metric_key, run_results in metrics.items():
+                mean, margin = compute_confidence_interval(run_results.values(), confidence)
                 if combine_columns:
-                    ci_metrics[key] = f"{mean:.3f} ±{margin:.3f}"
+                    ci_metrics[metric_key] = f"{mean:.3f} ±{margin:.3f}"
                 else:
-                    ci_metrics[f"{key} Mean"] = f"{mean:.3f}"
-                    ci_metrics[f"{key} ± CI"] = f"{margin:.3f}"
+                    ci_metrics[f"{metric_key} Mean"] = f"{mean:.3f}"
+                    ci_metrics[f"{metric_key} ± CI"] = f"{margin:.3f}"
             ci_model_metrics[model_name][category] = ci_metrics
 
     return ci_model_metrics
@@ -70,6 +70,7 @@ def process_and_save_metrics(
     model_sort_order: Optional[List[str]],
     metric_name_mapping: Dict[str, str],
     metric_sort_order: Optional[List[str]],
+    compute_ci: bool, 
     confidence: float,
     combine_columns: bool,
     include_step: bool,
@@ -83,12 +84,10 @@ def process_and_save_metrics(
         model_sort_order (Optional[List[str]]): Custom sorting order for models in the CSV.
         metric_name_mapping (Dict[str, str]): Mapping of metric keys to display names.
         metric_sort_order (Optional[List[str]]): Custom sorting order for metrics in the CSV.
+        compute_ci (bool): Whether to average and compute confidence intervals or save all runs seperately without aggregation.
         confidence (float): Confidence level for intervals.
         combine_columns (bool): Whether to combine mean and CI into one column.
         include_step (bool): Whether to include the "Step" key in the CSV.
-
-    Returns:
-        None
     """
     # Find all event files
     event_files = find_event_files(logs_dir)
@@ -98,17 +97,28 @@ def process_and_save_metrics(
     # Aggregate metrics by model
     model_metrics = aggregate_metrics_by_model(event_files, prefix_file_mapping)
 
-    # Compute confidence intervals for each model
-    ci_model_metrics = compute_ci_by_model(model_metrics, confidence, combine_columns)
+    if compute_ci:
+        # Compute confidence intervals for each model
+        model_metrics = compute_ci_by_model(model_metrics, confidence, combine_columns)
+    else: 
+        # Flatten the model_metrics dictionary by remapping to "model_key/run_name" format
+        model_metrics = {
+            f"{model_key}/{run_name}": {
+                category: run_metrics
+            }
+            for model_key, categories in model_metrics.items()
+            for category, runs in categories.items()
+            for run_name, run_metrics in runs.items()
+        }
 
     # Sort models if a custom sort order is provided
     if model_sort_order:
         ci_model_metrics_sorted = {
-            model_key: ci_model_metrics[model_key]
+            model_key: model_metrics[model_key]
             for model_key in model_sort_order
-            if model_key in ci_model_metrics
+            if model_key in model_metrics
         }
-        ci_model_metrics = ci_model_metrics_sorted
+        model_metrics = ci_model_metrics_sorted
 
     # Save metrics to CSV files
     if prefix_file_mapping:
@@ -119,7 +129,7 @@ def process_and_save_metrics(
             category_metrics = {}
             category_metrics = {
                 model_name: metrics.get(prefix, {})
-                for model_name, metrics in ci_model_metrics.items()
+                for model_name, metrics in model_metrics.items()
             }
             csv_path = os.path.join(logs_dir, file_name)
             save_metrics_to_csv(category_metrics, csv_path, model_name_mapping, model_sort_order, metric_name_mapping, metric_sort_order, include_step=include_step)
@@ -127,7 +137,7 @@ def process_and_save_metrics(
     else:
         all_metrics = {
             model_name: {key: value for category_metrics in metrics.values() for key, value in category_metrics.items()}
-            for model_name, metrics in ci_model_metrics.items()
+            for model_name, metrics in model_metrics.items()
         }
         csv_path = os.path.join(logs_dir, "all_metrics.csv")
         save_metrics_to_csv(all_metrics, csv_path, model_name_mapping, model_sort_order, metric_name_mapping, metric_sort_order, include_step=include_step)
