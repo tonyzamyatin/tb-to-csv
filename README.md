@@ -30,7 +30,7 @@ TensorBoard-to-CSV is a Python package that extracts metrics from TensorBoard ev
 Run the package using the CLI:
 ```bash
 cd tb_to_csv
-python cli.py -c example_config.yaml
+python matric_table.py -c example_config.yaml
 ```
 
 ### Configuration
