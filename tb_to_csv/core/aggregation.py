@@ -52,7 +52,7 @@ def compute_ci_by_model(model_metrics, confidence=0.95, combine_columns=True):
         for category, metrics in categories.items():
             ci_metrics = {}
             for metric_key, run_results in metrics.items():
-                mean, margin = compute_confidence_interval(run_results.values(), confidence)
+                mean, margin = compute_confidence_interval(list(run_results.values()), confidence)
                 if combine_columns:
                     ci_metrics[metric_key] = f"{mean:.3f} ±{margin:.3f}"
                 else:
